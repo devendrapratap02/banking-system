@@ -1,0 +1,87 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: banking-postgres
+    environment:
+      POSTGRES_DB: banking_db
+      POSTGRES_USER: banking_user
+      POSTGRES_PASSWORD: banking_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - banking-network
+
+  mongodb:
+    image: mongo:7.0
+    container_name: banking-mongo
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: mongo_user
+      MONGO_INITDB_ROOT_PASSWORD: mongo_password
+      MONGO_INITDB_DATABASE: banking_logs
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - banking-network
+
+  rabbitmq:
+    image: rabbitmq:3.12-management-alpine
+    container_name: banking-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: rabbit_user
+      RABBITMQ_DEFAULT_PASS: rabbit_password
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - banking-network
+
+  api-gateway:
+    build:
+      context: .
+      dockerfile: ./cmd/api-gateway/Dockerfile
+    container_name: banking-api-gateway
+    environment:
+      - PORT=8080
+      - POSTGRES_URL=postgres://banking_user:banking_password@postgres:5432/banking_db?sslmode=disable
+      - MONGODB_URL=mongodb://mongo_user:mongo_password@mongodb:27017/banking_logs?authSource=admin
+      - RABBITMQ_URL=amqp://rabbit_user:rabbit_password@rabbitmq:5672/
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+      - mongodb
+      - rabbitmq
+    networks:
+      - banking-network
+
+  transaction-processor:
+    build:
+      context: .
+      dockerfile: ./cmd/transaction-processor/Dockerfile
+    environment:
+      - POSTGRES_URL=postgres://banking_user:banking_password@postgres:5432/banking_db?sslmode=disable
+      - MONGODB_URL=mongodb://mongo_user:mongo_password@mongodb:27017/banking_logs?authSource=admin
+      - RABBITMQ_URL=amqp://rabbit_user:rabbit_password@rabbitmq:5672/
+    depends_on:
+      - postgres
+      - mongodb
+      - rabbitmq
+    networks:
+      - banking-network
+    deploy:
+      replicas: 2
+
+volumes:
+  postgres_data:
+  mongo_data:
+  rabbitmq_data:
+
+networks:
+  banking-network:
+    driver: bridge
