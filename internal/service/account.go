@@ -43,7 +43,6 @@ func (s *accountService) CreateAccount(ctx context.Context, req *models.CreateAc
 		Name:     req.Name,
 		Balance:  req.InitialBalance,
 		Currency: req.Currency,
-		Status:   models.AccountStatusActive,
 	}
 
 	if err := s.accountRepo.Create(ctx, account); err != nil {

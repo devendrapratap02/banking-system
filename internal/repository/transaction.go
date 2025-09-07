@@ -25,6 +25,7 @@ type TransactionRepository interface {
 	Update(ctx context.Context, transaction *models.Transaction) error
 	GetByAccountID(ctx context.Context, accountID uuid.UUID, limit, offset int) ([]*models.Transaction, error)
 	GetByAccountIDAndStatus(ctx context.Context, accountID uuid.UUID, status models.TransactionStatus, limit, offset int) ([]*models.Transaction, error)
+	GetAll(ctx context.Context, filters map[string]interface{}, limit, offset int) ([]*models.Transaction, int64, error)
 }
 
 // transactionRepository implements TransactionRepository
@@ -137,4 +138,53 @@ func (r *transactionRepository) GetByAccountIDAndStatus(ctx context.Context, acc
 	}
 	
 	return transactions, nil
+}
+
+// GetAll retrieves all transactions with optional filters and pagination
+func (r *transactionRepository) GetAll(ctx context.Context, filters map[string]interface{}, limit, offset int) ([]*models.Transaction, int64, error) {
+	// Build filter query
+	filter := bson.M{}
+	
+	// Add filters if provided
+	if filters != nil {
+		for key, value := range filters {
+			if value != nil && value != "" {
+				switch key {
+				case "account_id":
+					if accountID, err := uuid.Parse(value.(string)); err == nil {
+						filter[key] = accountID
+					}
+				case "type", "status":
+					filter[key] = value
+				case "currency":
+					filter[key] = value
+				}
+			}
+		}
+	}
+	
+	// Get total count
+	total, err := r.collection.CountDocuments(ctx, filter)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to count transactions: %w", err)
+	}
+	
+	// Find transactions
+	findOptions := options.Find()
+	findOptions.SetSort(bson.D{{Key: "created_at", Value: -1}}) // Sort by created_at descending
+	findOptions.SetLimit(int64(limit))
+	findOptions.SetSkip(int64(offset))
+	
+	cursor, err := r.collection.Find(ctx, filter, findOptions)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to get transactions: %w", err)
+	}
+	defer cursor.Close(ctx)
+	
+	var transactions []*models.Transaction
+	if err := cursor.All(ctx, &transactions); err != nil {
+		return nil, 0, fmt.Errorf("failed to decode transactions: %w", err)
+	}
+	
+	return transactions, total, nil
 }

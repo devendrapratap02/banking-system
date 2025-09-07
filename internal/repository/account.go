@@ -75,7 +75,7 @@ func (r *accountRepository) GetByID(ctx context.Context, id uuid.UUID) (*models.
 // GetByNumber retrieves an account by account number
 func (r *accountRepository) GetByNumber(ctx context.Context, number string) (*models.Account, error) {
 	var account models.Account
-	if err := r.db.WithContext(ctx).Where("number = ?", number).First(&account).Error; err != nil {
+	if err := r.db.WithContext(ctx).Where("account_number = ?", number).First(&account).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}

@@ -100,9 +100,66 @@ func (h *TransactionHandler) GetTransaction(c *gin.Context) {
 	c.JSON(http.StatusOK, transaction.ToResponse())
 }
 
-// GetTransactionHistory handles GET /accounts/:accountId/transactions
+// GetTransactions handles GET /transactions with optional filters
+func (h *TransactionHandler) GetTransactions(c *gin.Context) {
+	// Parse query parameters
+	limitStr := c.DefaultQuery("limit", "20")
+	offsetStr := c.DefaultQuery("offset", "0")
+
+	limit, err := strconv.Atoi(limitStr)
+	if err != nil || limit <= 0 {
+		limit = 20
+	}
+
+	offset, err := strconv.Atoi(offsetStr)
+	if err != nil || offset < 0 {
+		offset = 0
+	}
+
+	// Build filters from query parameters
+	filters := make(map[string]interface{})
+	
+	if accountID := c.Query("account_id"); accountID != "" {
+		filters["account_id"] = accountID
+	}
+	
+	if transactionType := c.Query("type"); transactionType != "" {
+		filters["type"] = transactionType
+	}
+	
+	if status := c.Query("status"); status != "" {
+		filters["status"] = status
+	}
+	
+	if currency := c.Query("currency"); currency != "" {
+		filters["currency"] = currency
+	}
+
+	transactions, total, err := h.transactionService.GetTransactions(c.Request.Context(), filters, limit, offset)
+	if err != nil {
+		logrus.WithError(err).Error("Failed to get transactions")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get transactions"})
+		return
+	}
+
+	// Convert to response format
+	responses := make([]*models.TransactionResponse, len(transactions))
+	for i, transaction := range transactions {
+		responses[i] = transaction.ToResponse()
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"transactions": responses,
+		"limit":        limit,
+		"offset":       offset,
+		"count":        len(responses),
+		"total":        total,
+	})
+}
+
+// GetTransactionHistory handles GET /accounts/:id/transactions
 func (h *TransactionHandler) GetTransactionHistory(c *gin.Context) {
-	accountIDStr := c.Param("accountId")
+	accountIDStr := c.Param("id")
 	accountID, err := uuid.Parse(accountIDStr)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid account ID"})

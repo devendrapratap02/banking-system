@@ -10,11 +10,10 @@ import (
 // Account represents a bank account in the relational database
 type Account struct {
 	ID        uuid.UUID      `json:"id" gorm:"type:uuid;primary_key"`
-	Number    string         `json:"account_number" gorm:"uniqueIndex;not null"`
+	Number    string         `json:"account_number" gorm:"column:account_number;uniqueIndex;not null"`
 	Name      string         `json:"name" gorm:"not null"`
 	Balance   int64          `json:"balance" gorm:"not null;default:0"` // Balance in cents to avoid floating point issues
 	Currency  string         `json:"currency" gorm:"not null;default:'USD'"`
-	Status    AccountStatus  `json:"status" gorm:"not null;default:'active'"`
 	CreatedAt time.Time      `json:"created_at"`
 	UpdatedAt time.Time      `json:"updated_at"`
 	DeletedAt gorm.DeletedAt `json:"-" gorm:"index"`
@@ -45,14 +44,13 @@ type CreateAccountRequest struct {
 
 // AccountResponse represents the response payload for account operations
 type AccountResponse struct {
-	ID            uuid.UUID     `json:"id"`
-	Number        string        `json:"account_number"`
-	Name          string        `json:"name"`
-	Balance       int64         `json:"balance"`
-	Currency      string        `json:"currency"`
-	Status        AccountStatus `json:"status"`
-	CreatedAt     time.Time     `json:"created_at"`
-	UpdatedAt     time.Time     `json:"updated_at"`
+	ID            uuid.UUID `json:"id"`
+	Number        string    `json:"account_number"`
+	Name          string    `json:"name"`
+	Balance       int64     `json:"balance"`
+	Currency      string    `json:"currency"`
+	CreatedAt     time.Time `json:"created_at"`
+	UpdatedAt     time.Time `json:"updated_at"`
 }
 
 // ToResponse converts Account to AccountResponse
@@ -63,7 +61,6 @@ func (a *Account) ToResponse() *AccountResponse {
 		Name:      a.Name,
 		Balance:   a.Balance,
 		Currency:  a.Currency,
-		Status:    a.Status,
 		CreatedAt: a.CreatedAt,
 		UpdatedAt: a.UpdatedAt,
 	}

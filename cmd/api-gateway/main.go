@@ -37,10 +37,12 @@ func main() {
 	}
 	defer postgresDB.Close()
 
-	// Run migrations
-	if err := postgresDB.Migrate(); err != nil {
-		logrus.Fatalf("Failed to run migrations: %v", err)
-	}
+	// Skip migrations for now as schema already exists
+	// TODO: Implement proper migration system
+	// if err := postgresDB.Migrate(); err != nil {
+	//     logrus.Fatalf("Failed to run migrations: %v", err)
+	// }
+	logrus.Info("Database migrations skipped - using existing schema")
 
 	// Initialize MongoDB
 	mongoDB, err := database.NewMongoDB(&cfg.MongoDB)
@@ -154,13 +156,14 @@ func setupRouter(accountHandler *handler.AccountHandler, transactionHandler *han
 			accounts.GET("", accountHandler.ListAccounts)
 			accounts.GET("/:id", accountHandler.GetAccount)
 			accounts.GET("/number/:number", accountHandler.GetAccountByNumber)
-			accounts.GET("/:accountId/transactions", transactionHandler.GetTransactionHistory)
+			accounts.GET("/:id/transactions", transactionHandler.GetTransactionHistory)
 		}
 
 		// Transaction routes
 		transactions := v1.Group("/transactions")
 		{
 			transactions.POST("", transactionHandler.CreateTransaction)
+			transactions.GET("", transactionHandler.GetTransactions)
 			transactions.GET("/:id", transactionHandler.GetTransaction)
 		}
 	}

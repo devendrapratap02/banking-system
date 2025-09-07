@@ -99,7 +99,6 @@ func TestAccountService_CreateAccount(t *testing.T) {
 				assert.Equal(t, tt.request.Name, account.Name)
 				assert.Equal(t, tt.request.InitialBalance, account.Balance)
 				assert.Equal(t, tt.request.Currency, account.Currency)
-				assert.Equal(t, models.AccountStatusActive, account.Status)
 			}
 
 			mockRepo.AssertExpectations(t)
@@ -117,7 +116,6 @@ func TestAccountService_GetAccount(t *testing.T) {
 		Name:     "John Doe",
 		Balance:  1000,
 		Currency: "USD",
-		Status:   models.AccountStatusActive,
 	}
 
 	tests := []struct {

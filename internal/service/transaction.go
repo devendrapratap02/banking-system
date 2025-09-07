@@ -20,6 +20,7 @@ type TransactionService interface {
 	GetTransaction(ctx context.Context, id primitive.ObjectID) (*models.Transaction, error)
 	GetTransactionByID(ctx context.Context, transactionID uuid.UUID) (*models.Transaction, error)
 	GetTransactionHistory(ctx context.Context, accountID uuid.UUID, limit, offset int) ([]*models.Transaction, error)
+	GetTransactions(ctx context.Context, filters map[string]interface{}, limit, offset int) ([]*models.Transaction, int64, error)
 	ProcessTransaction(ctx context.Context, msg *models.TransactionMessage) error
 }
 
@@ -54,10 +55,11 @@ func (s *transactionService) CreateTransaction(ctx context.Context, req *models.
 		return nil, fmt.Errorf("account not found")
 	}
 
-	// Validate account status
-	if account.Status != models.AccountStatusActive {
-		return nil, fmt.Errorf("account is not active")
-	}
+	// Note: Account status validation disabled as Status field is not currently in the model
+	// TODO: Re-enable when Status field is added back to Account model
+	// if account.Status != models.AccountStatusActive {
+	//     return nil, fmt.Errorf("account is not active")
+	// }
 
 	// Validate currency match
 	if account.Currency != req.Currency {
@@ -154,6 +156,20 @@ func (s *transactionService) GetTransactionHistory(ctx context.Context, accountI
 	}
 
 	return transactions, nil
+}
+
+// GetTransactions retrieves all transactions with optional filters and pagination
+func (s *transactionService) GetTransactions(ctx context.Context, filters map[string]interface{}, limit, offset int) ([]*models.Transaction, int64, error) {
+	if limit <= 0 || limit > 100 {
+		limit = 20 // Default limit
+	}
+
+	transactions, total, err := s.transactionRepo.GetAll(ctx, filters, limit, offset)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to get transactions: %w", err)
+	}
+
+	return transactions, total, nil
 }
 
 // ProcessTransaction processes a transaction message from the queue
