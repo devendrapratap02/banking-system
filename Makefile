@@ -279,3 +279,51 @@ help:
 deploy-prod: test docker-build
 	@echo "🚀 Deploying to production..."
 	# Add production deployment commands here
+
+# ==============================================================================
+# CODE QUALITY & CLEANUP COMMANDS
+# ==============================================================================
+
+# Run comprehensive code cleanup and optimization
+cleanup:
+	@echo "🧹 Running comprehensive code cleanup..."
+	@bash scripts/cleanup.sh
+
+# Format Go code
+format:
+	@echo "🎨 Formatting Go code..."
+	go fmt ./...
+	@echo "✅ Code formatting completed!"
+
+# Lint Go code (requires golangci-lint)
+lint:
+	@echo "🔍 Running linter..."
+	@if command -v golangci-lint >/dev/null 2>&1; then \
+		golangci-lint run --timeout=5m; \
+	else \
+		echo "⚠️  golangci-lint not installed. Install it from: https://golangci-lint.run/usage/install/"; \
+		echo "🔄 Running basic go vet instead..."; \
+		go vet ./...; \
+	fi
+	@echo "✅ Linting completed!"
+
+# Run security scan (requires gosec)
+security-scan:
+	@echo "🔒 Running security scan..."
+	@if command -v gosec >/dev/null 2>&1; then \
+		gosec -quiet ./...; \
+	else \
+		echo "⚠️  gosec not installed. Install it with: go install github.com/securecodewarrior/gosec/v2/cmd/gosec@latest"; \
+	fi
+	@echo "✅ Security scan completed!"
+
+# Check for TODOs and FIXMEs
+check-todos:
+	@echo "📝 Checking for TODOs and FIXMEs..."
+	@find . -name "*.go" -o -name "*.js" -o -name "*.jsx" | xargs grep -n -i "todo\|fixme" || echo "✅ No TODOs or FIXMEs found!"
+
+# Full code quality check
+code-quality: format lint security-scan check-todos
+	@echo "🎯 Code quality check completed!"
+
+.PHONY: cleanup format lint security-scan check-todos code-quality

@@ -1,20 +1,20 @@
-import React, { useState, useEffect } from 'react';
-import { bankingAPI } from '../services/api';
-import { dollarsTocents, formatCurrency } from '../services/utils';
+import React, { useState, useEffect } from "react";
+import { bankingAPI } from "../services/api";
+import { dollarsTocents, formatCurrency } from "../services/utils";
 
 function CreateTransaction() {
   const [accounts, setAccounts] = useState([]);
   const [formData, setFormData] = useState({
-    account_id: '',
-    type: 'deposit',
-    amount: '',
-    currency: 'USD',
-    description: '',
+    account_id: "",
+    type: "deposit",
+    amount: "",
+    currency: "USD",
+    description: "",
   });
   const [loading, setLoading] = useState(false);
   const [loadingAccounts, setLoadingAccounts] = useState(true);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [createdTransaction, setCreatedTransaction] = useState(null);
   const [selectedAccount, setSelectedAccount] = useState(null);
 
@@ -24,10 +24,10 @@ function CreateTransaction() {
 
   useEffect(() => {
     if (formData.account_id) {
-      const account = accounts.find(acc => acc.id === formData.account_id);
+      const account = accounts.find((acc) => acc.id === formData.account_id);
       setSelectedAccount(account);
       if (account) {
-        setFormData(prev => ({ ...prev, currency: account.currency }));
+        setFormData((prev) => ({ ...prev, currency: account.currency }));
       }
     } else {
       setSelectedAccount(null);
@@ -40,8 +40,8 @@ function CreateTransaction() {
       const response = await bankingAPI.getAccounts(50, 0); // Get more accounts for selection
       setAccounts(response.data.accounts || []);
     } catch (err) {
-      setError('Failed to load accounts');
-      console.error('Error fetching accounts:', err);
+      setError("Failed to load accounts");
+      console.error("Error fetching accounts:", err);
     } finally {
       setLoadingAccounts(false);
     }
@@ -49,33 +49,39 @@ function CreateTransaction() {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
-    setSuccess('');
+    setError("");
+    setSuccess("");
 
     try {
       // Validate form data
       if (!formData.account_id) {
-        throw new Error('Please select an account');
+        throw new Error("Please select an account");
       }
 
-      if (!formData.amount || isNaN(parseFloat(formData.amount)) || parseFloat(formData.amount) <= 0) {
-        throw new Error('Please enter a valid amount greater than 0');
+      if (
+        !formData.amount ||
+        isNaN(parseFloat(formData.amount)) ||
+        parseFloat(formData.amount) <= 0
+      ) {
+        throw new Error("Please enter a valid amount greater than 0");
       }
 
       // Check for withdrawal with insufficient balance
-      if (formData.type === 'withdrawal' && selectedAccount) {
+      if (formData.type === "withdrawal" && selectedAccount) {
         const amountInCents = dollarsTocents(formData.amount);
         if (amountInCents > selectedAccount.balance) {
-          throw new Error(`Insufficient balance. Available: ${formatCurrency(selectedAccount.balance, selectedAccount.currency)}`);
+          throw new Error(
+            `Insufficient balance. Available: ${formatCurrency(selectedAccount.balance, selectedAccount.currency)}`,
+          );
         }
       }
 
@@ -85,29 +91,35 @@ function CreateTransaction() {
         type: formData.type,
         amount: dollarsTocents(formData.amount),
         currency: formData.currency,
-        description: formData.description.trim() || `${formData.type} transaction`,
+        description:
+          formData.description.trim() || `${formData.type} transaction`,
       };
 
       const response = await bankingAPI.createTransaction(transactionData);
-      
+
       setCreatedTransaction(response.data);
-      setSuccess('Transaction created successfully! It will be processed shortly.');
-      
+      setSuccess(
+        "Transaction created successfully! It will be processed shortly.",
+      );
+
       // Reset form
       setFormData({
-        account_id: '',
-        type: 'deposit',
-        amount: '',
-        currency: 'USD',
-        description: '',
+        account_id: "",
+        type: "deposit",
+        amount: "",
+        currency: "USD",
+        description: "",
       });
       setSelectedAccount(null);
 
       // Refresh accounts to get updated balances
       fetchAccounts();
-
     } catch (err) {
-      setError(err.response?.data?.error || err.message || 'Failed to create transaction');
+      setError(
+        err.response?.data?.error ||
+          err.message ||
+          "Failed to create transaction",
+      );
     } finally {
       setLoading(false);
     }
@@ -123,29 +135,41 @@ function CreateTransaction() {
 
   return (
     <div className="card">
-      <h2 style={{ marginBottom: '2rem', color: '#1f2937' }}>💸 Create New Transaction</h2>
-      
+      <h2 style={{ marginBottom: "2rem", color: "#1f2937" }}>
+        💸 Create New Transaction
+      </h2>
+
       {error && <div className="error">{error}</div>}
       {success && <div className="success">{success}</div>}
-      
+
       {createdTransaction && (
-        <div className="success" style={{ marginBottom: '2rem' }}>
+        <div className="success" style={{ marginBottom: "2rem" }}>
           <h3>🎉 Transaction Created Successfully!</h3>
-          <div style={{ marginTop: '1rem' }}>
-            <strong>Transaction ID:</strong> {createdTransaction.transaction_id}<br />
-            <strong>Type:</strong> {createdTransaction.type}<br />
-            <strong>Amount:</strong> {formatCurrency(createdTransaction.amount, createdTransaction.currency)}<br />
-            <strong>Status:</strong> {createdTransaction.status}<br />
+          <div style={{ marginTop: "1rem" }}>
+            <strong>Transaction ID:</strong> {createdTransaction.transaction_id}
+            <br />
+            <strong>Type:</strong> {createdTransaction.type}
+            <br />
+            <strong>Amount:</strong>{" "}
+            {formatCurrency(
+              createdTransaction.amount,
+              createdTransaction.currency,
+            )}
+            <br />
+            <strong>Status:</strong> {createdTransaction.status}
+            <br />
             <strong>Description:</strong> {createdTransaction.description}
           </div>
         </div>
       )}
 
       {accounts.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '2rem' }}>
-          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🏦</div>
-          <h3 style={{ color: '#6b7280', marginBottom: '1rem' }}>No Accounts Available</h3>
-          <p style={{ color: '#9ca3af', marginBottom: '2rem' }}>
+        <div style={{ textAlign: "center", padding: "2rem" }}>
+          <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>🏦</div>
+          <h3 style={{ color: "#6b7280", marginBottom: "1rem" }}>
+            No Accounts Available
+          </h3>
+          <p style={{ color: "#9ca3af", marginBottom: "2rem" }}>
             You need to create an account before making transactions
           </p>
           <a href="/create-account" className="btn">
@@ -164,28 +188,40 @@ function CreateTransaction() {
               required
             >
               <option value="">Choose an account...</option>
-              {accounts.map(account => (
+              {accounts.map((account) => (
                 <option key={account.id} value={account.id}>
-                  {account.name} - #{account.account_number} 
-                  ({formatCurrency(account.balance, account.currency)})
+                  {account.name} - #{account.account_number}(
+                  {formatCurrency(account.balance, account.currency)})
                 </option>
               ))}
             </select>
           </div>
 
           {selectedAccount && (
-            <div style={{ 
-              background: '#f8fafc', 
-              padding: '1rem', 
-              borderRadius: '8px', 
-              marginBottom: '1.5rem',
-              border: '1px solid #e2e8f0'
-            }}>
-              <h4 style={{ margin: '0 0 0.5rem 0', color: '#374151' }}>Selected Account Details:</h4>
-              <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
-                <strong>Name:</strong> {selectedAccount.name}<br />
-                <strong>Account Number:</strong> {selectedAccount.account_number}<br />
-                <strong>Current Balance:</strong> {formatCurrency(selectedAccount.balance, selectedAccount.currency)}<br />
+            <div
+              style={{
+                background: "#f8fafc",
+                padding: "1rem",
+                borderRadius: "8px",
+                marginBottom: "1.5rem",
+                border: "1px solid #e2e8f0",
+              }}
+            >
+              <h4 style={{ margin: "0 0 0.5rem 0", color: "#374151" }}>
+                Selected Account Details:
+              </h4>
+              <div style={{ fontSize: "0.875rem", color: "#6b7280" }}>
+                <strong>Name:</strong> {selectedAccount.name}
+                <br />
+                <strong>Account Number:</strong>{" "}
+                {selectedAccount.account_number}
+                <br />
+                <strong>Current Balance:</strong>{" "}
+                {formatCurrency(
+                  selectedAccount.balance,
+                  selectedAccount.currency,
+                )}
+                <br />
                 <strong>Currency:</strong> {selectedAccount.currency}
               </div>
             </div>
@@ -218,11 +254,16 @@ function CreateTransaction() {
               step="0.01"
               required
             />
-            <small style={{ color: '#6b7280', fontSize: '0.875rem' }}>
+            <small style={{ color: "#6b7280", fontSize: "0.875rem" }}>
               Enter amount in {formData.currency} (e.g., 100.50)
-              {selectedAccount && formData.type === 'withdrawal' && (
-                <span style={{ color: '#ef4444' }}>
-                  <br />Available balance: {formatCurrency(selectedAccount.balance, selectedAccount.currency)}
+              {selectedAccount && formData.type === "withdrawal" && (
+                <span style={{ color: "#ef4444" }}>
+                  <br />
+                  Available balance:{" "}
+                  {formatCurrency(
+                    selectedAccount.balance,
+                    selectedAccount.currency,
+                  )}
                 </span>
               )}
             </small>
@@ -239,29 +280,29 @@ function CreateTransaction() {
               maxLength={255}
               rows={3}
             />
-            <small style={{ color: '#6b7280', fontSize: '0.875rem' }}>
+            <small style={{ color: "#6b7280", fontSize: "0.875rem" }}>
               Optional description for this transaction (max 255 characters)
             </small>
           </div>
 
-          <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem' }}>
+          <div style={{ display: "flex", gap: "1rem", marginTop: "2rem" }}>
             <button type="submit" className="btn" disabled={loading}>
-              {loading ? '⏳ Processing...' : '💸 Create Transaction'}
+              {loading ? "⏳ Processing..." : "💸 Create Transaction"}
             </button>
-            
-            <button 
-              type="button" 
+
+            <button
+              type="button"
               className="btn btn-secondary"
               onClick={() => {
                 setFormData({
-                  account_id: '',
-                  type: 'deposit',
-                  amount: '',
-                  currency: 'USD',
-                  description: '',
+                  account_id: "",
+                  type: "deposit",
+                  amount: "",
+                  currency: "USD",
+                  description: "",
                 });
-                setError('');
-                setSuccess('');
+                setError("");
+                setSuccess("");
                 setCreatedTransaction(null);
                 setSelectedAccount(null);
               }}
@@ -272,10 +313,27 @@ function CreateTransaction() {
         </form>
       )}
 
-      <div style={{ marginTop: '2rem', padding: '1rem', backgroundColor: '#f8fafc', borderRadius: '8px' }}>
-        <h4 style={{ color: '#374151', marginBottom: '0.5rem' }}>💡 Transaction Notes:</h4>
-        <ul style={{ color: '#6b7280', fontSize: '0.875rem', paddingLeft: '1.5rem' }}>
-          <li>Transactions are processed asynchronously and may take a few moments</li>
+      <div
+        style={{
+          marginTop: "2rem",
+          padding: "1rem",
+          backgroundColor: "#f8fafc",
+          borderRadius: "8px",
+        }}
+      >
+        <h4 style={{ color: "#374151", marginBottom: "0.5rem" }}>
+          💡 Transaction Notes:
+        </h4>
+        <ul
+          style={{
+            color: "#6b7280",
+            fontSize: "0.875rem",
+            paddingLeft: "1.5rem",
+          }}
+        >
+          <li>
+            Transactions are processed asynchronously and may take a few moments
+          </li>
           <li>Deposits add money to the account, withdrawals remove money</li>
           <li>Withdrawals cannot exceed the current account balance</li>
           <li>All amounts are processed in the account's currency</li>

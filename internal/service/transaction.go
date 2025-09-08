@@ -251,10 +251,10 @@ func (s *transactionService) ProcessTransaction(ctx context.Context, msg *models
 func (s *transactionService) markTransactionFailed(ctx context.Context, transaction *models.Transaction, reason string) error {
 	transaction.Status = models.TransactionStatusFailed
 	transaction.FailureReason = reason
-	
+
 	if err := s.transactionRepo.Update(ctx, transaction); err != nil {
 		logrus.WithError(err).Error("Failed to mark transaction as failed")
 	}
-	
+
 	return fmt.Errorf("transaction failed: %s", reason)
 }

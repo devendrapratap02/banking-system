@@ -40,7 +40,7 @@ func NewAccountRepository(db *database.PostgresDB) AccountRepository {
 func (r *accountRepository) Create(ctx context.Context, account *models.Account) error {
 	// Generate unique account number
 	account.Number = r.generateAccountNumber()
-	
+
 	// Ensure uniqueness
 	for {
 		existing, err := r.GetByNumber(ctx, account.Number)
@@ -97,15 +97,15 @@ func (r *accountRepository) UpdateBalance(ctx context.Context, id uuid.UUID, new
 	result := r.db.WithContext(ctx).Model(&models.Account{}).
 		Where("id = ?", id).
 		Update("balance", newBalance)
-	
+
 	if result.Error != nil {
 		return fmt.Errorf("failed to update account balance: %w", result.Error)
 	}
-	
+
 	if result.RowsAffected == 0 {
 		return gorm.ErrRecordNotFound
 	}
-	
+
 	return nil
 }
 

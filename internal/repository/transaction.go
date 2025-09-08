@@ -43,12 +43,12 @@ func NewTransactionRepository(db *database.MongoDB) TransactionRepository {
 // Create creates a new transaction
 func (r *transactionRepository) Create(ctx context.Context, transaction *models.Transaction) error {
 	transaction.CreatedAt = time.Now()
-	
+
 	result, err := r.collection.InsertOne(ctx, transaction)
 	if err != nil {
 		return fmt.Errorf("failed to create transaction: %w", err)
 	}
-	
+
 	transaction.ID = result.InsertedID.(primitive.ObjectID)
 	return nil
 }
@@ -83,7 +83,7 @@ func (r *transactionRepository) GetByTransactionID(ctx context.Context, transact
 func (r *transactionRepository) Update(ctx context.Context, transaction *models.Transaction) error {
 	filter := bson.M{"_id": transaction.ID}
 	update := bson.M{"$set": transaction}
-	
+
 	_, err := r.collection.UpdateOne(ctx, filter, update)
 	if err != nil {
 		return fmt.Errorf("failed to update transaction: %w", err)
@@ -94,23 +94,23 @@ func (r *transactionRepository) Update(ctx context.Context, transaction *models.
 // GetByAccountID retrieves transactions for an account with pagination
 func (r *transactionRepository) GetByAccountID(ctx context.Context, accountID uuid.UUID, limit, offset int) ([]*models.Transaction, error) {
 	filter := bson.M{"account_id": accountID}
-	
+
 	findOptions := options.Find()
 	findOptions.SetSort(bson.D{{Key: "created_at", Value: -1}}) // Sort by created_at descending
 	findOptions.SetLimit(int64(limit))
 	findOptions.SetSkip(int64(offset))
-	
+
 	cursor, err := r.collection.Find(ctx, filter, findOptions)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get transactions by account ID: %w", err)
 	}
 	defer cursor.Close(ctx)
-	
+
 	var transactions []*models.Transaction
 	if err := cursor.All(ctx, &transactions); err != nil {
 		return nil, fmt.Errorf("failed to decode transactions: %w", err)
 	}
-	
+
 	return transactions, nil
 }
 
@@ -120,23 +120,23 @@ func (r *transactionRepository) GetByAccountIDAndStatus(ctx context.Context, acc
 		"account_id": accountID,
 		"status":     status,
 	}
-	
+
 	findOptions := options.Find()
 	findOptions.SetSort(bson.D{{Key: "created_at", Value: -1}})
 	findOptions.SetLimit(int64(limit))
 	findOptions.SetSkip(int64(offset))
-	
+
 	cursor, err := r.collection.Find(ctx, filter, findOptions)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get transactions by account ID and status: %w", err)
 	}
 	defer cursor.Close(ctx)
-	
+
 	var transactions []*models.Transaction
 	if err := cursor.All(ctx, &transactions); err != nil {
 		return nil, fmt.Errorf("failed to decode transactions: %w", err)
 	}
-	
+
 	return transactions, nil
 }
 
@@ -144,7 +144,7 @@ func (r *transactionRepository) GetByAccountIDAndStatus(ctx context.Context, acc
 func (r *transactionRepository) GetAll(ctx context.Context, filters map[string]interface{}, limit, offset int) ([]*models.Transaction, int64, error) {
 	// Build filter query
 	filter := bson.M{}
-	
+
 	// Add filters if provided
 	if filters != nil {
 		for key, value := range filters {
@@ -162,29 +162,29 @@ func (r *transactionRepository) GetAll(ctx context.Context, filters map[string]i
 			}
 		}
 	}
-	
+
 	// Get total count
 	total, err := r.collection.CountDocuments(ctx, filter)
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to count transactions: %w", err)
 	}
-	
+
 	// Find transactions
 	findOptions := options.Find()
 	findOptions.SetSort(bson.D{{Key: "created_at", Value: -1}}) // Sort by created_at descending
 	findOptions.SetLimit(int64(limit))
 	findOptions.SetSkip(int64(offset))
-	
+
 	cursor, err := r.collection.Find(ctx, filter, findOptions)
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to get transactions: %w", err)
 	}
 	defer cursor.Close(ctx)
-	
+
 	var transactions []*models.Transaction
 	if err := cursor.All(ctx, &transactions); err != nil {
 		return nil, 0, fmt.Errorf("failed to decode transactions: %w", err)
 	}
-	
+
 	return transactions, total, nil
 }

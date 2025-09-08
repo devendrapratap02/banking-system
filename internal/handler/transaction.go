@@ -37,7 +37,7 @@ func (h *TransactionHandler) CreateTransaction(c *gin.Context) {
 	transaction, err := h.transactionService.CreateTransaction(c.Request.Context(), &req)
 	if err != nil {
 		logrus.WithError(err).Error("Failed to create transaction")
-		
+
 		// Handle specific error cases
 		switch err.Error() {
 		case "account not found":
@@ -62,7 +62,7 @@ func (h *TransactionHandler) CreateTransaction(c *gin.Context) {
 // GetTransaction handles GET /transactions/:id
 func (h *TransactionHandler) GetTransaction(c *gin.Context) {
 	idStr := c.Param("id")
-	
+
 	// Try to parse as transaction ID (UUID) first
 	if transactionID, err := uuid.Parse(idStr); err == nil {
 		transaction, err := h.transactionService.GetTransactionByID(c.Request.Context(), transactionID)
@@ -78,7 +78,7 @@ func (h *TransactionHandler) GetTransaction(c *gin.Context) {
 		c.JSON(http.StatusOK, transaction.ToResponse())
 		return
 	}
-	
+
 	// Try to parse as MongoDB ObjectID
 	objectID, err := primitive.ObjectIDFromHex(idStr)
 	if err != nil {
@@ -118,19 +118,19 @@ func (h *TransactionHandler) GetTransactions(c *gin.Context) {
 
 	// Build filters from query parameters
 	filters := make(map[string]interface{})
-	
+
 	if accountID := c.Query("account_id"); accountID != "" {
 		filters["account_id"] = accountID
 	}
-	
+
 	if transactionType := c.Query("type"); transactionType != "" {
 		filters["type"] = transactionType
 	}
-	
+
 	if status := c.Query("status"); status != "" {
 		filters["status"] = status
 	}
-	
+
 	if currency := c.Query("currency"); currency != "" {
 		filters["currency"] = currency
 	}

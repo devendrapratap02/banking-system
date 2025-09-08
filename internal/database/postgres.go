@@ -48,7 +48,7 @@ func NewPostgresDB(cfg *config.DatabaseConfig) (*PostgresDB, error) {
 	// Test connection
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	
+
 	if err := sqlDB.PingContext(ctx); err != nil {
 		return nil, err
 	}

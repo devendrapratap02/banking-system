@@ -73,7 +73,7 @@ func main() {
 
 	// Setup HTTP server
 	router := setupRouter(accountHandler, transactionHandler, dashboardHandler)
-	
+
 	server := &http.Server{
 		Addr:         ":" + cfg.Server.Port,
 		Handler:      router,
@@ -133,7 +133,7 @@ func setupRouter(accountHandler *handler.AccountHandler, transactionHandler *han
 	}
 
 	router := gin.New()
-	
+
 	// Middleware
 	router.Use(gin.Logger())
 	router.Use(gin.Recovery())

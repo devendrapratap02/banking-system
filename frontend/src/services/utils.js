@@ -1,19 +1,19 @@
-export const formatCurrency = (amountInCents, currency = 'USD') => {
+export const formatCurrency = (amountInCents, currency = "USD") => {
   const amount = amountInCents / 100;
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
     currency: currency,
   }).format(amount);
 };
 
 export const formatDate = (dateString) => {
   const date = new Date(dateString);
-  return new Intl.DateTimeFormat('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
+  return new Intl.DateTimeFormat("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
   }).format(date);
 };
 
@@ -32,26 +32,26 @@ export const centsToDollars = (cents) => {
 
 export const getTransactionTypeColor = (type) => {
   switch (type) {
-    case 'deposit':
-      return '#10b981';
-    case 'withdrawal':
-      return '#ef4444';
-    case 'transfer':
-      return '#3b82f6';
+    case "deposit":
+      return "#10b981";
+    case "withdrawal":
+      return "#ef4444";
+    case "transfer":
+      return "#3b82f6";
     default:
-      return '#6b7280';
+      return "#6b7280";
   }
 };
 
 export const getStatusColor = (status) => {
   switch (status) {
-    case 'processed':
-      return '#10b981';
-    case 'pending':
-      return '#f59e0b';
-    case 'failed':
-      return '#ef4444';
+    case "processed":
+      return "#10b981";
+    case "pending":
+      return "#f59e0b";
+    case "failed":
+      return "#ef4444";
     default:
-      return '#6b7280';
+      return "#6b7280";
   }
 };

@@ -21,7 +21,7 @@ type MongoDB struct {
 func NewMongoDB(cfg *config.MongoDBConfig) (*MongoDB, error) {
 	// Set client options
 	clientOptions := options.Client().ApplyURI(cfg.URL)
-	
+
 	// Create context with timeout
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()

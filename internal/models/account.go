@@ -22,9 +22,9 @@ type Account struct {
 type AccountStatus string
 
 const (
-	AccountStatusActive   AccountStatus = "active"
+	AccountStatusActive    AccountStatus = "active"
 	AccountStatusSuspended AccountStatus = "suspended"
-	AccountStatusClosed   AccountStatus = "closed"
+	AccountStatusClosed    AccountStatus = "closed"
 )
 
 // BeforeCreate hook to generate UUID
@@ -44,13 +44,13 @@ type CreateAccountRequest struct {
 
 // AccountResponse represents the response payload for account operations
 type AccountResponse struct {
-	ID            uuid.UUID `json:"id"`
-	Number        string    `json:"account_number"`
-	Name          string    `json:"name"`
-	Balance       int64     `json:"balance"`
-	Currency      string    `json:"currency"`
-	CreatedAt     time.Time `json:"created_at"`
-	UpdatedAt     time.Time `json:"updated_at"`
+	ID        uuid.UUID `json:"id"`
+	Number    string    `json:"account_number"`
+	Name      string    `json:"name"`
+	Balance   int64     `json:"balance"`
+	Currency  string    `json:"currency"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 // ToResponse converts Account to AccountResponse

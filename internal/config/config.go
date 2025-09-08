@@ -40,9 +40,9 @@ type RabbitMQConfig struct {
 }
 
 type QueueConfig struct {
-	TransactionQueue   string
-	RetryQueue         string
-	MaxRetryAttempts   int
+	TransactionQueue string
+	RetryQueue       string
+	MaxRetryAttempts int
 }
 
 type LoggingConfig struct {

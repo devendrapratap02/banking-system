@@ -67,7 +67,6 @@ func TestAccountService_CreateAccount(t *testing.T) {
 				Currency:       "USD",
 			},
 			setup: func() {
-				mockRepo.On("GetByNumber", mock.Anything, mock.AnythingOfType("string")).Return(nil, nil)
 				mockRepo.On("Create", mock.Anything, mock.AnythingOfType("*models.Account")).Return(nil)
 			},
 			wantErr: false,
@@ -111,6 +110,7 @@ func TestAccountService_GetAccount(t *testing.T) {
 	service := NewAccountService(mockRepo)
 
 	accountID := uuid.New()
+	notFoundID := uuid.New() // Different ID for not found test
 	expectedAccount := &models.Account{
 		ID:       accountID,
 		Name:     "John Doe",
@@ -136,9 +136,9 @@ func TestAccountService_GetAccount(t *testing.T) {
 		},
 		{
 			name: "account not found",
-			id:   accountID,
+			id:   notFoundID, // Use different ID
 			setup: func() {
-				mockRepo.On("GetByID", mock.Anything, accountID).Return((*models.Account)(nil), nil)
+				mockRepo.On("GetByID", mock.Anything, notFoundID).Return((*models.Account)(nil), nil)
 			},
 			want:    nil,
 			wantErr: true,

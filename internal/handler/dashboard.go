@@ -25,16 +25,16 @@ func NewDashboardHandler(accountService service.AccountService, transactionServi
 
 // DashboardStats represents the dashboard statistics
 type DashboardStats struct {
-	TotalAccounts           int                    `json:"total_accounts"`
-	BalancesByCurrency      map[string]int64       `json:"balances_by_currency"`
-	RecentTransactionsCount int64                  `json:"recent_transactions_count"`
+	TotalAccounts           int              `json:"total_accounts"`
+	BalancesByCurrency      map[string]int64 `json:"balances_by_currency"`
+	RecentTransactionsCount int64            `json:"recent_transactions_count"`
 }
 
 // DashboardResponse represents the complete dashboard data
 type DashboardResponse struct {
-	Stats              DashboardStats                    `json:"stats"`
-	RecentAccounts     []map[string]interface{}          `json:"recent_accounts"`
-	RecentTransactions []map[string]interface{}          `json:"recent_transactions"`
+	Stats              DashboardStats           `json:"stats"`
+	RecentAccounts     []map[string]interface{} `json:"recent_accounts"`
+	RecentTransactions []map[string]interface{} `json:"recent_transactions"`
 }
 
 // GetDashboard handles GET /dashboard
@@ -127,6 +127,5 @@ func (h *DashboardHandler) getDashboardStats(c *gin.Context) (*DashboardStats, e
 		TotalAccounts:           len(accounts),
 		BalancesByCurrency:      balancesByCurrency,
 		RecentTransactionsCount: totalTransactions,
-
-		}, nil
+	}, nil
 }

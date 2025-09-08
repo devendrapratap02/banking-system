@@ -135,7 +135,7 @@ func (r *RabbitMQ) ConsumeTransactions(ctx context.Context, handler func(context
 
 			if err := handler(ctx, &txMsg); err != nil {
 				logrus.WithError(err).WithField("transaction_id", txMsg.TransactionID).Error("Failed to process transaction")
-				
+
 				// Retry logic
 				if txMsg.RetryCount < r.config.MaxRetryAttempts {
 					txMsg.RetryCount++
@@ -143,7 +143,7 @@ func (r *RabbitMQ) ConsumeTransactions(ctx context.Context, handler func(context
 						logrus.WithError(retryErr).Error("Failed to publish retry message")
 					}
 				}
-				
+
 				msg.Nack(false, false)
 				continue
 			}
