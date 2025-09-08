@@ -38,6 +38,9 @@ export const bankingAPI = {
   // Health check
   healthCheck: () => api.get('/health'),
 
+  // Dashboard
+  getDashboard: () => api.get('/api/v1/dashboard'),
+
   // Account operations
   createAccount: (accountData) => api.post('/api/v1/accounts', accountData),
   getAccounts: (limit = 20, offset = 0) => api.get(`/api/v1/accounts?limit=${limit}&offset=${offset}`),

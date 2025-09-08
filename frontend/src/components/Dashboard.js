@@ -2,59 +2,46 @@ import React, { useState, useEffect } from 'react';
 import { bankingAPI } from '../services/api';
 import { formatCurrency, formatDate } from '../services/utils';
 
-function Dashboard() {
-  const [accounts, setAccounts] = useState([]);
-  const [recentTransactions, setRecentTransactions] = useState([]);
+const Dashboard = () => {
+  const [stats, setStats] = useState({
+    total_accounts: 0,
+    recent_accounts: [],
+    recent_transactions: [],
+    balances_by_currency: {},
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [stats, setStats] = useState({
-    totalAccounts: 0,
-    balancesByCurrency: {},
-    recentTransactionsCount: 0,
-  });
+  const [currentCurrencyIndex, setCurrentCurrencyIndex] = useState(0);
+  const [autoRotate, setAutoRotate] = useState(true);
 
   useEffect(() => {
     fetchDashboardData();
   }, []);
+
+  // Auto-rotation timer effect
+  useEffect(() => {
+    if (!autoRotate) return;
+    
+    const currencyEntries = Object.entries(stats.balances_by_currency || {});
+    if (currencyEntries.length <= 1) return;
+
+    const timer = setInterval(() => {
+      setCurrentCurrencyIndex((prev) => (prev + 1) % currencyEntries.length);
+    }, 3000); // Change currency every 3 seconds
+
+    return () => clearInterval(timer);
+  }, [autoRotate, stats.balances_by_currency]);
 
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
       setError('');
 
-      // Fetch accounts
-      const accountsResponse = await bankingAPI.getAccounts(10, 0);
-      const accountsData = accountsResponse.data.accounts || [];
-      setAccounts(accountsData);
+      // Fetch all dashboard data from single API call
+      const dashboardResponse = await bankingAPI.getDashboard();
+      const dashboardData = dashboardResponse.data;
 
-      // Calculate balances by currency
-      const balancesByCurrency = accountsData.reduce((acc, account) => {
-        const currency = account.currency;
-        if (!acc[currency]) {
-          acc[currency] = 0;
-        }
-        acc[currency] += account.balance;
-        return acc;
-      }, {});
-
-      // Fetch recent transactions from all accounts
-      let allTransactions = [];
-      try {
-        const transactionsResponse = await bankingAPI.getTransactions({ limit: 10, offset: 0 });
-        allTransactions = transactionsResponse.data.transactions || [];
-      } catch (err) {
-        console.log('No recent transactions found:', err);
-      }
-
-      // Sort by date and take most recent
-      allTransactions.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-      setRecentTransactions(allTransactions.slice(0, 5));
-
-      setStats({
-        totalAccounts: accountsData.length,
-        balancesByCurrency,
-        recentTransactionsCount: allTransactions.length,
-      });
+      setStats(dashboardData.stats);
 
     } catch (err) {
       setError('Failed to load dashboard data');
@@ -62,6 +49,24 @@ function Dashboard() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Get currencies and current currency for rotation
+  const currencyEntries = Object.entries(stats.balances_by_currency || {});
+  const currentCurrency = currencyEntries[currentCurrencyIndex];
+
+  const nextCurrency = () => {
+    setAutoRotate(false); // Stop auto-rotation when user manually navigates
+    setCurrentCurrencyIndex((prev) => (prev + 1) % currencyEntries.length);
+  };
+
+  const prevCurrency = () => {
+    setAutoRotate(false); // Stop auto-rotation when user manually navigates
+    setCurrentCurrencyIndex((prev) => (prev - 1 + currencyEntries.length) % currencyEntries.length);
+  };
+
+  const toggleAutoRotate = () => {
+    setAutoRotate(prev => !prev);
   };
 
   if (loading) {
@@ -89,7 +94,7 @@ function Dashboard() {
             textAlign: 'center'
           }}>
             <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>🏦</div>
-            <div style={{ fontSize: '2rem', fontWeight: 'bold' }}>{stats.totalAccounts}</div>
+            <div style={{ fontSize: '2rem', fontWeight: 'bold' }}>{stats.total_accounts}</div>
             <div style={{ opacity: 0.9 }}>Total Accounts</div>
           </div>
           
@@ -98,21 +103,94 @@ function Dashboard() {
             color: 'white', 
             padding: '1.5rem', 
             borderRadius: '12px',
-            textAlign: 'center'
+            textAlign: 'center',
+            position: 'relative',
+            minHeight: '120px'
           }}>
             <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>💰</div>
-            <div style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>
-              {Object.entries(stats.balancesByCurrency).length > 0 ? (
-                Object.entries(stats.balancesByCurrency).map(([currency, balance]) => (
-                  <div key={currency} style={{ marginBottom: '0.25rem' }}>
-                    {formatCurrency(balance, currency)}
+            <div style={{ fontSize: '1.2rem', fontWeight: 'bold', minHeight: '1.5rem' }}>
+              {currencyEntries.length > 0 ? (
+                currentCurrency ? (
+                  <div>
+                    {formatCurrency(currentCurrency[1], currentCurrency[0])}
                   </div>
-                ))
+                ) : (
+                  formatCurrency(0)
+                )
               ) : (
                 formatCurrency(0)
               )}
             </div>
-            <div style={{ opacity: 0.9 }}>Total Balances</div>
+            <div style={{ opacity: 0.9, marginBottom: '0.5rem' }}>
+              {currencyEntries.length > 1 ? `Balance (${currentCurrencyIndex + 1}/${currencyEntries.length})` : 'Total Balance'}
+            </div>
+            
+            {/* Currency Navigation Buttons */}
+            {currencyEntries.length > 1 && (
+              <div style={{ 
+                display: 'flex', 
+                justifyContent: 'center', 
+                gap: '0.5rem',
+                marginTop: '0.5rem'
+              }}>
+                <button 
+                  onClick={prevCurrency}
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.2)',
+                    border: 'none',
+                    borderRadius: '50%',
+                    width: '24px',
+                    height: '24px',
+                    color: 'white',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '12px'
+                  }}
+                >
+                  ←
+                </button>
+                <button 
+                  onClick={nextCurrency}
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.2)',
+                    border: 'none',
+                    borderRadius: '50%',
+                    width: '24px',
+                    height: '24px',
+                    color: 'white',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '12px'
+                  }}
+                >
+                  →
+                </button>
+                <button 
+                  onClick={toggleAutoRotate}
+                  style={{
+                    background: autoRotate ? 'rgba(255, 255, 255, 0.3)' : 'rgba(255, 255, 255, 0.1)',
+                    border: 'none',
+                    borderRadius: '50%',
+                    width: '24px',
+                    height: '24px',
+                    color: 'white',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '10px',
+                    marginLeft: '0.25rem'
+                  }}
+                  title={autoRotate ? 'Disable auto-rotation' : 'Enable auto-rotation'}
+                >
+                  {autoRotate ? '⏸' : '▶'}
+                </button>
+              </div>
+            )}
           </div>
           
           <div style={{ 
@@ -123,7 +201,7 @@ function Dashboard() {
             textAlign: 'center'
           }}>
             <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>📋</div>
-            <div style={{ fontSize: '2rem', fontWeight: 'bold' }}>{stats.recentTransactionsCount}</div>
+            <div style={{ fontSize: '2rem', fontWeight: 'bold' }}>{stats.recent_transactions_count || 0}</div>
             <div style={{ opacity: 0.9 }}>Recent Transactions</div>
           </div>
         </div>
@@ -132,9 +210,9 @@ function Dashboard() {
       {/* Recent Accounts */}
       <div className="card">
         <h3 style={{ marginBottom: '1.5rem', color: '#1f2937' }}>🏦 Recent Accounts</h3>
-        {accounts.length > 0 ? (
+        {stats.recent_accounts && stats.recent_accounts.length > 0 ? (
           <div className="grid">
-            {accounts.slice(0, 3).map((account) => (
+            {stats.recent_accounts.slice(0, 3).map((account) => (
               <div key={account.id} className="account-card">
                 <div className="account-number">Account: {account.account_number}</div>
                 <div className="account-name">{account.name}</div>
@@ -155,9 +233,9 @@ function Dashboard() {
       {/* Recent Transactions */}
       <div className="card">
         <h3 style={{ marginBottom: '1.5rem', color: '#1f2937' }}>📋 Recent Transactions</h3>
-        {recentTransactions.length > 0 ? (
+        {stats.recent_transactions && stats.recent_transactions.length > 0 ? (
           <div>
-            {recentTransactions.map((transaction) => (
+            {stats.recent_transactions.map((transaction) => (
               <div key={transaction.transaction_id} className="transaction-item">
                 <div>
                   <div style={{ fontWeight: '600', marginBottom: '0.25rem' }}>
@@ -186,6 +264,6 @@ function Dashboard() {
       </div>
     </div>
   );
-}
+};
 
 export default Dashboard;

@@ -69,9 +69,10 @@ func main() {
 	// Initialize handlers
 	accountHandler := handler.NewAccountHandler(accountService)
 	transactionHandler := handler.NewTransactionHandler(transactionService)
+	dashboardHandler := handler.NewDashboardHandler(accountService, transactionService)
 
 	// Setup HTTP server
-	router := setupRouter(accountHandler, transactionHandler)
+	router := setupRouter(accountHandler, transactionHandler, dashboardHandler)
 	
 	server := &http.Server{
 		Addr:         ":" + cfg.Server.Port,
@@ -125,7 +126,7 @@ func setupLogging(level string) {
 	}
 }
 
-func setupRouter(accountHandler *handler.AccountHandler, transactionHandler *handler.TransactionHandler) *gin.Engine {
+func setupRouter(accountHandler *handler.AccountHandler, transactionHandler *handler.TransactionHandler, dashboardHandler *handler.DashboardHandler) *gin.Engine {
 	// Set Gin mode based on log level
 	if logrus.GetLevel() != logrus.DebugLevel {
 		gin.SetMode(gin.ReleaseMode)
@@ -149,6 +150,9 @@ func setupRouter(accountHandler *handler.AccountHandler, transactionHandler *han
 	// API routes
 	v1 := router.Group("/api/v1")
 	{
+		// Dashboard route
+		v1.GET("/dashboard", dashboardHandler.GetDashboard)
+
 		// Account routes
 		accounts := v1.Group("/accounts")
 		{
